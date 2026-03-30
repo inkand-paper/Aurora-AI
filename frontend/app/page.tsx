@@ -240,47 +240,6 @@ export default function LandingPage() {
       </svg>
     </div>
   </Link>
-))}{FEATURES.map((f) => (
-  <Link 
-  key={f.title} 
-  href={f.href} 
-  className="feature-card" // This handles the hover via the <style> tag below
-  style={{
-    display: "block",
-    background: "var(--bg-card)", 
-    border: "1px solid var(--border)",
-    borderRadius: "var(--radius-xl)", 
-    padding: "28px",
-    textDecoration: "none",
-    transition: "all 0.2s ease", 
-  }}
->
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-      <div style={{
-        width: 44, height: 44, borderRadius: 12,
-        background: f.dim, color: f.color,
-        display: "flex", alignItems: "center", justifyContent: "center",
-      }}>
-        {f.icon}
-      </div>
-      <span className="tag-badge" style={{ background: f.dim, color: f.color }}>
-        {f.tag}
-      </span>
-    </div>
-    <h3 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 19, marginBottom: 10, color: "var(--text-1)" }}>
-      {f.title}
-    </h3>
-    <p style={{ fontSize: 14, color: "var(--text-2)", lineHeight: 1.65, marginBottom: 20 }}>
-      {f.desc}
-    </p>
-    <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, color: f.color, fontFamily: "var(--font-display)" }}>
-      Try now
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-      </svg>
-    </div>
-  </Link>
 ))}
           </div>
         </section>
