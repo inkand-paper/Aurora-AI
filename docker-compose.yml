@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: aurora_db
+    environment:
+      POSTGRES_USER: aurora_user
+      POSTGRES_PASSWORD: aurora_pass
+      POSTGRES_DB: aurora_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - aurora_pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: aurora_backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    container_name: aurora_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  aurora_pgdata:
