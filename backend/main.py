@@ -7,7 +7,8 @@ import os
 
 origins = [
     "http://localhost:3000",
-    "https://your-frontend-domain.com",  # add this when deploying
+    "https://aurora-ai-2xgm.onrender.com",
+    "https://aurora-ai.vercel.app",  # update after Vercel gives you the URL
 ]
 
 Base.metadata.create_all(bind=engine)
