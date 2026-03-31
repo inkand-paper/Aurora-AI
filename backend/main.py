@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import Base, engine
-from app.routers import last_night, analogy, reality, skill_income
+from app.routers import last_night, analogy, reality, skill_income, auth
+from app.models.user import User
 import os
 
 origins = [
@@ -32,6 +33,8 @@ app.include_router(last_night.router)
 app.include_router(analogy.router)
 app.include_router(reality.router)
 app.include_router(skill_income.router)
+app.include_router(auth.router)
+
 
 @app.get("/")
 def root():
@@ -40,3 +43,5 @@ def root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "app": settings.APP_NAME}
+
+
