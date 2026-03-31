@@ -5,148 +5,273 @@ import { useEffect, useState } from "react";
 import { getUser, logout, AuthUser } from "../lib/auth";
 
 const navLinks = [
-  { href: "/last-night",   label: "Last Night" },
-  { href: "/analogy",      label: "Analogy" },
-  { href: "/reality",      label: "Reality" },
+  { href: "/last-night",   label: "Last Night Mode" },
+  { href: "/analogy",      label: "Analogy Generator" },
+  { href: "/reality",      label: "Reality Mode" },
   { href: "/skill-income", label: "Skill → Income" },
   { href: "/history",      label: "History" },
 ];
 
 export default function Header() {
-  const pathname = usePathname();
-  const router   = useRouter();
-  const isLanding = pathname === "/";
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const pathname  = usePathname();
+  const router    = useRouter();
+  const [user,     setUser]     = useState<AuthUser | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
+  // Track window width with JS — 100% reliable
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 860);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // Close menu + refresh user on route change
   useEffect(() => {
     setUser(getUser());
+    setMenuOpen(false);
   }, [pathname]);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (e: MouseEvent) => {
+      const header = document.getElementById("aurora-header");
+      if (header && !header.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [menuOpen]);
 
   const handleLogout = () => {
     logout();
     setUser(null);
+    setMenuOpen(false);
     router.push("/");
   };
 
   return (
-    <>
-      <header style={{
-        position: "sticky", top: 0, zIndex: 50,
-        background: "rgba(8,8,16,0.82)",
-        backdropFilter: "blur(18px)",
-        WebkitBackdropFilter: "blur(18px)",
-        borderBottom: "1px solid var(--border)",
+    <header id="aurora-header" style={{
+      position: "sticky", top: 0, zIndex: 100,
+      background: "rgba(8,8,16,0.95)",
+      backdropFilter: "blur(20px)",
+      WebkitBackdropFilter: "blur(20px)",
+      borderBottom: "1px solid var(--border)",
+    }}>
+
+      {/* ── Main bar ── */}
+      <div style={{
+        maxWidth: 1100, margin: "0 auto",
+        padding: "0 20px", height: 58,
+        display: "flex", alignItems: "center",
+        justifyContent: "space-between", gap: 12,
       }}>
-        <div style={{
-          maxWidth: 1100, margin: "0 auto", padding: "0 24px",
-          height: 58, display: "flex", alignItems: "center",
-          justifyContent: "space-between", gap: 16,
+
+        {/* Logo — always visible */}
+        <Link href="/" style={{
+          display: "flex", alignItems: "center", gap: 9,
+          textDecoration: "none", flexShrink: 0,
         }}>
+          <div style={{
+            width: 31, height: 31, borderRadius: 9,
+            background: "var(--purple)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontFamily: "var(--font-display)", fontWeight: 800,
+            fontSize: 15, color: "white",
+          }}>A</div>
+          <span style={{
+            fontFamily: "var(--font-display)", fontWeight: 700,
+            fontSize: 16, color: "var(--text-1)",
+          }}>AURORA</span>
+        </Link>
 
-          {/* Logo */}
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 9, textDecoration: "none", flexShrink: 0 }}>
-            <div style={{
-              width: 31, height: 31, borderRadius: 9,
-              background: "var(--purple)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 15, color: "white",
-            }}>A</div>
-            <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16, color: "var(--text-1)" }}>
-              AURORA
-            </span>
-          </Link>
-
-          {/* Center nav */}
-          <nav id="header-nav" style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, justifyContent: "center" }}>
+        {/* Desktop nav — only when NOT mobile */}
+        {!isMobile && (
+          <nav style={{
+            display: "flex", alignItems: "center",
+            gap: 2, flex: 1, justifyContent: "center",
+          }}>
             {navLinks.map((link) => {
               const active = pathname === link.href;
               return (
                 <Link key={link.href} href={link.href} style={{
-                  padding: "6px 13px", borderRadius: 8,
-                  fontSize: 13, fontWeight: active ? 600 : 400,
-                  fontFamily: "var(--font-body)",
+                  padding: "6px 11px", borderRadius: 8,
+                  fontSize: 13,
+                  fontWeight: active ? 600 : 400,
                   color: active ? "var(--text-1)" : "var(--text-2)",
                   background: active ? "var(--bg-elevated)" : "transparent",
                   border: active ? "1px solid var(--border-md)" : "1px solid transparent",
                   textDecoration: "none", transition: "all 0.15s ease",
+                  whiteSpace: "nowrap",
                 }}>
                   {link.label}
                 </Link>
               );
             })}
           </nav>
+        )}
 
-          {/* Right side */}
+        {/* Desktop right — only when NOT mobile */}
+        {!isMobile && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
             {user ? (
               <>
-                <span style={{ fontSize: 13, color: "var(--text-2)", fontFamily: "var(--font-body)" }}>
+                <Link href="/account" style={{
+                  fontSize: 13, color: "var(--text-2)",
+                  textDecoration: "none", padding: "6px 10px",
+                  borderRadius: 8, whiteSpace: "nowrap",
+                  transition: "color 0.15s",
+                }}>
                   Hi, {user.name.split(" ")[0]}
-                </span>
+                </Link>
                 <button onClick={handleLogout} style={{
-                  padding: "8px 16px", borderRadius: 9,
-                  background: "var(--bg-elevated)",
-                  color: "var(--text-2)", fontSize: 13, fontWeight: 500,
-                  fontFamily: "var(--font-body)",
-                  border: "1px solid var(--border)", cursor: "pointer",
-                  transition: "all 0.15s ease",
-                }}>
-                  Sign out
-                </button>
+                  padding: "7px 14px", borderRadius: 8,
+                  background: "var(--bg-elevated)", color: "var(--text-2)",
+                  fontSize: 13, fontWeight: 500,
+                  border: "1px solid var(--border)",
+                  cursor: "pointer", fontFamily: "var(--font-body)",
+                }}>Sign out</button>
               </>
-            ) : isLanding ? (
-              <div style={{ display: "flex", gap: 8 }}>
-                <Link href="/login" style={{
-                  padding: "8px 16px", borderRadius: 9,
-                  background: "var(--bg-elevated)", color: "var(--text-2)",
-                  fontSize: 13, fontWeight: 500, fontFamily: "var(--font-body)",
-                  textDecoration: "none", border: "1px solid var(--border)",
-                }}>
-                  Sign in
-                </Link>
-                <Link href="/register" style={{
-                  padding: "8px 18px", borderRadius: 9,
-                  background: "var(--purple)", color: "white",
-                  fontSize: 13, fontWeight: 600,
-                  fontFamily: "var(--font-display)", textDecoration: "none",
-                }}>
-                  Sign up
-                </Link>
-              </div>
             ) : (
-              <div style={{ display: "flex", gap: 8 }}>
+              <>
                 <Link href="/login" style={{
-                  padding: "8px 16px", borderRadius: 9,
+                  padding: "7px 14px", borderRadius: 8,
                   background: "var(--bg-elevated)", color: "var(--text-2)",
-                  fontSize: 13, fontWeight: 500, fontFamily: "var(--font-body)",
+                  fontSize: 13, fontWeight: 500,
                   textDecoration: "none", border: "1px solid var(--border)",
-                  display: "flex", alignItems: "center", gap: 6,
-                }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="15 18 9 12 15 6"/>
-                  </svg>
-                  Dashboard
-                </Link>
+                }}>Sign in</Link>
                 <Link href="/register" style={{
-                  padding: "8px 14px", borderRadius: 9,
+                  padding: "7px 14px", borderRadius: 8,
                   background: "var(--purple)", color: "white",
                   fontSize: 13, fontWeight: 600,
-                  fontFamily: "var(--font-display)", textDecoration: "none",
-                }}>
-                  Sign up
-                </Link>
-              </div>
+                  textDecoration: "none", fontFamily: "var(--font-display)",
+                }}>Sign up</Link>
+              </>
             )}
           </div>
-        </div>
-      </header>
+        )}
 
-      <style>{`
-        @media (max-width: 660px) {
-          #header-nav { display: none !important; }
-        }
-      `}</style>
-    </>
+        {/* Mobile hamburger — only when mobile */}
+        {isMobile && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
+            style={{
+              background: menuOpen ? "var(--bg-elevated)" : "transparent",
+              border: "1px solid var(--border-md)",
+              borderRadius: 8, padding: "7px 10px",
+              cursor: "pointer", color: "var(--text-1)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "background 0.15s", flexShrink: 0,
+            }}>
+            {menuOpen ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2.2"
+                strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6"  x2="6"  y2="18"/>
+                <line x1="6"  y1="6"  x2="18" y2="18"/>
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2.2"
+                strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="6"  x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+            )}
+          </button>
+        )}
+      </div>
+
+      {/* ── Mobile dropdown — only when mobile AND menu open ── */}
+      {isMobile && menuOpen && (
+        <div style={{
+          background: "rgba(8,8,16,0.98)",
+          borderBottom: "1px solid var(--border)",
+          padding: "10px 16px 20px",
+        }}>
+
+          {/* Nav links */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 14 }}>
+            {navLinks.map((link) => {
+              const active = pathname === link.href;
+              return (
+                <Link key={link.href} href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  style={{
+                    padding: "12px 14px", borderRadius: 10,
+                    fontSize: 15, fontWeight: active ? 600 : 400,
+                    color: active ? "var(--text-1)" : "var(--text-2)",
+                    background: active ? "var(--bg-elevated)" : "transparent",
+                    textDecoration: "none", display: "block",
+                    transition: "background 0.15s",
+                  }}>
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: 1, background: "var(--border)", marginBottom: 14 }}/>
+
+          {/* User section */}
+          {user ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+
+              {/* Profile row */}
+              <Link href="/account" onClick={() => setMenuOpen(false)} style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "12px 14px", borderRadius: 10,
+                textDecoration: "none", transition: "background 0.15s",
+              }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: "50%",
+                  background: "var(--purple)", color: "white", flexShrink: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 15,
+                }}>
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 600, color: "var(--text-1)", fontSize: 14 }}>
+                    {user.name}
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--text-3)" }}>{user.email}</div>
+                </div>
+              </Link>
+
+              {/* Sign out */}
+              <button onClick={handleLogout} style={{
+                padding: "12px 14px", borderRadius: 10, width: "100%",
+                background: "var(--red-dim)", color: "var(--red)",
+                fontSize: 14, fontWeight: 500,
+                border: "1px solid rgba(239,68,68,0.2)",
+                cursor: "pointer", textAlign: "left",
+                fontFamily: "var(--font-body)",
+              }}>
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <Link href="/login" onClick={() => setMenuOpen(false)} style={{
+                padding: "13px 14px", borderRadius: 10, textAlign: "center",
+                background: "var(--bg-elevated)", color: "var(--text-1)",
+                fontSize: 14, fontWeight: 500, textDecoration: "none",
+                border: "1px solid var(--border)",
+              }}>Sign in</Link>
+              <Link href="/register" onClick={() => setMenuOpen(false)} style={{
+                padding: "13px 14px", borderRadius: 10, textAlign: "center",
+                background: "var(--purple)", color: "white",
+                fontSize: 14, fontWeight: 600, textDecoration: "none",
+                fontFamily: "var(--font-display)",
+              }}>Sign up free</Link>
+            </div>
+          )}
+        </div>
+      )}
+    </header>
   );
 }

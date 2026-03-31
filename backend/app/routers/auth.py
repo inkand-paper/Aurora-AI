@@ -5,6 +5,7 @@ from app.core.dependencies import get_current_user
 from app.schemas.user import UserRegister, UserLogin, TokenOut, UserOut
 from app.services.auth_service import register_user, login_user
 from app.models.user import User
+from app.schemas.user import UserRegister, UserLogin, TokenOut, UserOut, UserUpdate
 
 router = APIRouter(
     prefix="/api/auth",
@@ -24,4 +25,15 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserOut)
 def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@router.post("/update-profile", response_model=UserOut)
+def update_profile(
+    data: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    current_user.name = data.name
+    db.commit()
+    db.refresh(current_user)
     return current_user

@@ -221,11 +221,58 @@ h1, h2, h3, h4 {
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 
-@media (max-width: 640px) {
-  .page-content { padding: 32px 16px 60px; }
-  .card { padding: 20px; }
-  .grid-2 { grid-template-columns: 1fr; }
-  .grid-3 { grid-template-columns: 1fr; }
-  .grid-4 { grid-template-columns: repeat(2, 1fr); }
-  h1 { font-size: 2rem !important; }
+/* ── Mobile responsive fixes ── */
+@media (max-width: 768px) {
+  .page-content {
+    padding: 28px 16px 60px;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  .result-section {
+    padding: 18px;
+  }
+
+  /* Single column on mobile */
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Smaller headings */
+  h1 {
+    font-size: 1.8rem !important;
+    line-height: 1.2;
+  }
+
+  /* Buttons full width on mobile */
+  .btn {
+    font-size: 14px;
+    padding: 13px 20px;
+  }
+
+  /* Row items stack on very small screens */
+  .row-item {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* Tag badges smaller on mobile */
+  .tag-badge {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-content {
+    padding: 20px 14px 50px;
+  }
+
+  .card {
+    padding: 14px;
+  }
 }
