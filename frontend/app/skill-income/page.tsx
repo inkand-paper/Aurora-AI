@@ -2,6 +2,8 @@
 import { useState } from "react";
 import Header from "../../components/Header";
 import { apiPost } from "../../lib/api";
+import { isLoggedIn } from "../../lib/auth";
+import { useEffect } from "react";
 
 // ── Types ───────────────────────────────────────────────────
 interface EarningPath { path: string; platform: string; how_it_works: string; realistic_earning: string; difficulty: string; best_for: string; }
@@ -80,6 +82,12 @@ export default function SkillIncomePage() {
     setError(e instanceof Error ? e.message : "Failed to connect to AURORA");
   } finally { setLoading(false); }
 };
+
+useEffect(() => {
+  if (!isLoggedIn()) {
+    window.location.href = "/login";
+  }
+}, []);
 
   // ── Render ────────────────────────────────────────────────
   return (

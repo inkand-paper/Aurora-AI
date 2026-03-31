@@ -2,6 +2,8 @@
 import { useState } from "react";
 import Header from "../../components/Header";
 import { apiPost } from "../../lib/api";
+import { isLoggedIn } from "../../lib/auth";
+import { useEffect } from "react";
 
 
 // ── Types ───────────────────────────────────────────────────
@@ -74,6 +76,12 @@ export default function RealityPage() {
     { label: "Hours planned to study", val: planned, set: setPlanned, placeholder: "e.g. 10",           type: "number" },
     { label: "Hours actually studied", val: actual,  set: setActual,  placeholder: "e.g. 4",            type: "number" },
   ];
+
+  useEffect(() => {
+  if (!isLoggedIn()) {
+    window.location.href = "/login";
+  }
+}, []);
 
   // ── Render ────────────────────────────────────────────────
   return (

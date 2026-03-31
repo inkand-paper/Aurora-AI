@@ -2,6 +2,9 @@
 import { useState } from "react";
 import Header from "../../components/Header";
 import { apiPost } from "../../lib/api";
+import { isLoggedIn } from "../../lib/auth";
+import { useEffect } from "react";
+
 
 // ── Types ───────────────────────────────────────────────────
 interface Analogy { title: string; scenario: string; explanation: string; memorable_line: string; }
@@ -59,6 +62,12 @@ export default function AnalogyPage() {
     setError(e instanceof Error ? e.message : "Failed to connect to AURORA");
   } finally { setLoading(false); }
 };
+
+useEffect(() => {
+  if (!isLoggedIn()) {
+    window.location.href = "/login";
+  }
+}, []);
 
   // ── Render ────────────────────────────────────────────────
   return (

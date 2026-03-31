@@ -1,5 +1,8 @@
+"use client";
 import Link from "next/link";
 import Header from "../../components/Header";
+import { useEffect } from "react";
+import { isLoggedIn } from "../../lib/auth";
 
 const FEATURES = [
   {
@@ -64,7 +67,15 @@ const FEATURES = [
   },
 ];
 
+
+
 export default function DashboardPage() {
+  useEffect(() => {
+    if (!isLoggedIn()) {
+      window.location.href = "/login";
+    }
+  }, []);
+
   return (
     <div className="page-wrap">
       <Header />

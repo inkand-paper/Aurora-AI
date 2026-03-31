@@ -1,12 +1,10 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-// ── Get token from localStorage ──
 function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("aurora_token");
 }
 
-// ── Main API helper — sends token automatically ──
 export async function apiPost<T>(endpoint: string, body: object): Promise<T> {
   const token = getAuthToken();
 
@@ -24,12 +22,17 @@ export async function apiPost<T>(endpoint: string, body: object): Promise<T> {
     body: JSON.stringify(body),
   });
 
+  // If unauthorized → redirect to login
+  if (res.status === 401) {
+    window.location.href = "/login";
+    throw new Error("Please log in to continue");
+  }
+
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || "Something went wrong");
   return data as T;
 }
 
-// ── GET request helper (for history page) ──
 export async function apiGet<T>(endpoint: string): Promise<T> {
   const token = getAuthToken();
 
@@ -45,6 +48,11 @@ export async function apiGet<T>(endpoint: string): Promise<T> {
     method: "GET",
     headers,
   });
+
+  if (res.status === 401) {
+    window.location.href = "/login";
+    throw new Error("Please log in to continue");
+  }
 
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || "Something went wrong");

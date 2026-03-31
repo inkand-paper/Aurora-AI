@@ -2,6 +2,8 @@
 import { useState } from "react";
 import Header from "../../components/Header";
 import { apiPost } from "../../lib/api";
+import { isLoggedIn } from "../../lib/auth";
+import { useEffect } from "react";
 
 // ── Types ───────────────────────────────────────────────────
 interface Topic    { topic: string; importance: string; time_allocation: string; why: string; }
@@ -68,6 +70,13 @@ export default function LastNightPage() {
 
   const toggleQuiz = (i: number) =>
     setRevealed((prev) => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n; });
+
+
+  useEffect(() => {
+  if (!isLoggedIn()) {
+    window.location.href = "/login";
+  }
+}, []);
 
   // ── Render ─────────────────────────────────────────────────
   return (
