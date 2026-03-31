@@ -9,6 +9,7 @@ const navLinks = [
   { href: "/analogy",      label: "Analogy" },
   { href: "/reality",      label: "Reality" },
   { href: "/skill-income", label: "Skill → Income" },
+  { href: "/history",      label: "History" },
 ];
 
 export default function Header() {
