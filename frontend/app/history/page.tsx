@@ -531,13 +531,14 @@ export default function HistoryPage() {
               const cfg = FEATURE_CONFIG[item.feature_type];
               return (
                 <div key={item.id} onClick={() => setSelected(item)} style={{
-                  display: "flex", alignItems: "center",
-                  justifyContent: "space-between",
-                  background: "var(--bg-card)", border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-lg)", padding: "16px 20px",
-                  cursor: "pointer", gap: 12,
-                  transition: "border-color 0.2s, transform 0.15s",
-                }}
+  display: "flex", alignItems: "center",
+  justifyContent: "space-between",
+  background: "var(--bg-card)", border: "1px solid var(--border)",
+  borderRadius: "var(--radius-lg)", padding: "14px 16px",
+  cursor: "pointer", gap: 8,
+  transition: "border-color 0.2s, transform 0.15s",
+  overflow: "hidden", width: "100%",
+}}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLElement).style.borderColor = "var(--border-md)";
                   (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
@@ -546,16 +547,24 @@ export default function HistoryPage() {
                   (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
                   (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-                    <span className="tag-badge" style={{ background: cfg.dim, color: cfg.color, flexShrink: 0 }}>
-                      {cfg.label}
-                    </span>
-                    <span style={{ fontSize: 14, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {getSummary(item)}
-                    </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, flex: 1, overflow: "hidden" }}>
+  <span className="tag-badge" style={{ background: cfg.dim, color: cfg.color, flexShrink: 0, fontSize: 9 }}>
+    {cfg.label}
+  </span>
+                    <span style={{ 
+  fontSize: 13, 
+  fontWeight: 500, 
+  overflow: "hidden", 
+  textOverflow: "ellipsis", 
+  whiteSpace: "nowrap",
+  maxWidth: "100%",
+  display: "block",
+}}>
+  {getSummary(item)}
+</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                    <span style={{ fontSize: 12, color: "var(--text-3)" }}>{formatDate(item.created_at)}</span>
+                    <span style={{ fontSize: 11, color: "var(--text-3)",display: "none" }} className="history-date">{formatDate(item.created_at)}</span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                       stroke="var(--text-3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
