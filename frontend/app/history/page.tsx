@@ -40,12 +40,13 @@ function getSummary(item: HistoryItem): string {
 
 // ── Last Night Detail ─────────────────────────────────────────
 function LastNightDetail({ data }: { data: Record<string, unknown> }) {
-  const topics    = data.priority_topics  as Array<Record<string,string>>;
-  const plan      = data.study_plan       as Array<Record<string,string>>;
-  const quiz      = data.quick_quiz       as Array<Record<string,string>>;
-  const tip       = data.survival_tip     as string;
+  const mustStudy  = (data.must_study || data.priority_topics) as Array<Record<string,string>>;
+  const crashPlan  = (data.crash_plan || data.study_plan)       as Array<Record<string,string>>;
+  const quiz       = data.quick_quiz       as Array<Record<string,string>>;
+  const highProb   = data.high_probability_topics as Array<Record<string,string>> | undefined;
+  const skipThese  = data.skip_these as Array<Record<string,string>> | undefined;
+  const tip        = data.survival_tip as string;
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
-
   const toggle = (i: number) =>
     setRevealed(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n; });
 
@@ -58,71 +59,109 @@ function LastNightDetail({ data }: { data: Record<string, unknown> }) {
         <p style={{ fontSize: 15, fontStyle: "italic", lineHeight: 1.6 }}>"{tip}"</p>
       </div>
 
-      {/* Priority topics */}
-      <div className="card">
-        <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 14 }}>PRIORITY TOPICS</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {topics?.map((t, i) => (
-            <div key={i} className="row-item">
-              <div style={{
-                width: 26, height: 26, borderRadius: 7, flexShrink: 0,
-                background: t.importance === "high" ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.15)",
-                color: t.importance === "high" ? "var(--red)" : "var(--amber)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12,
-              }}>{i + 1}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>{t.topic}</div>
-                <div style={{ fontSize: 12, color: "var(--text-3)" }}>{t.why}</div>
-              </div>
-              <div style={{ textAlign: "right", flexShrink: 0 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: t.importance === "high" ? "var(--red)" : "var(--amber)" }}>
-                  {t.importance?.toUpperCase()}
+      {/* High probability topics — new entries only */}
+      {highProb && highProb.length > 0 && (
+        <div className="card">
+          <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 14 }}>HIGH PROBABILITY TOPICS</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {highProb.map((t, i) => (
+              <div key={i} className="row-item">
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{t.topic}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-3)" }}>{t.reason}</div>
                 </div>
-                <div style={{ fontSize: 11, color: "var(--text-3)" }}>{t.time_allocation}</div>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 5, background: "rgba(245,158,11,0.2)", color: "var(--amber)", fontFamily: "var(--font-display)" }}>
+                  {t.confidence?.toUpperCase()}
+                </span>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Study plan */}
-      <div className="card">
-        <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 14 }}>HOUR-BY-HOUR PLAN</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {plan?.map((slot, i) => (
-            <div key={i} className="row-item">
-              <span style={{ padding: "4px 10px", borderRadius: 6, background: "var(--purple-dim)", color: "var(--purple)", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", flexShrink: 0 }}>
-                {slot.time_slot}
-              </span>
-              <div>
-                <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 3 }}>{slot.activity}</div>
-                <div style={{ fontSize: 12, color: "var(--text-3)" }}>{slot.tip}</div>
+      {/* Must study / priority topics */}
+      {mustStudy && mustStudy.length > 0 && (
+        <div className="card">
+          <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 14 }}>
+            {data.must_study ? "MUST STUDY" : "PRIORITY TOPICS"}
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {mustStudy.map((t, i) => (
+              <div key={i} className="row-item">
+                <div style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: "var(--purple-dim)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12 }}>{i + 1}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{t.topic}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-3)" }}>{t.why}</div>
+                  {t.quick_tip && <div style={{ fontSize: 12, color: "var(--purple)", fontStyle: "italic", marginTop: 3 }}>Tip: {t.quick_tip}</div>}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--text-3)", flexShrink: 0 }}>{t.time_allocation}</div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Skip these — new entries only */}
+      {skipThese && skipThese.length > 0 && (
+        <div className="card">
+          <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 14 }}>SKIP THESE</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {skipThese.map((t, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, padding: "12px 14px", borderRadius: "var(--radius-md)", background: "var(--red-dim)", border: "1px solid rgba(239,68,68,0.18)" }}>
+                <span style={{ color: "var(--red)", fontWeight: 700 }}>✕</span>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{t.topic}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-3)" }}>{t.reason}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Crash plan / study plan */}
+      {crashPlan && crashPlan.length > 0 && (
+        <div className="card">
+          <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 14 }}>
+            {data.crash_plan ? "CRASH PLAN" : "HOUR-BY-HOUR PLAN"}
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {crashPlan.map((slot, i) => (
+              <div key={i} className="row-item">
+                <span style={{ padding: "4px 10px", borderRadius: 6, background: "var(--purple-dim)", color: "var(--purple)", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", flexShrink: 0 }}>
+                  {slot.time_slot}
+                </span>
+                <div>
+                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 3 }}>{slot.activity}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-3)" }}>{slot.tip}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Quiz */}
-      <div className="card">
-        <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 14 }}>QUICK QUIZ</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {quiz?.map((q, i) => (
-            <div key={i} onClick={() => toggle(i)} style={{
-              padding: 14, borderRadius: "var(--radius-md)", cursor: "pointer",
-              background: revealed.has(i) ? "var(--green-dim)" : "var(--bg-elevated)",
-              border: `1px solid ${revealed.has(i) ? "rgba(34,197,94,0.28)" : "var(--border)"}`,
-              transition: "all 0.2s",
-            }}>
-              <div style={{ fontWeight: 500, fontSize: 14 }}>Q{i + 1}. {q.question}</div>
-              {revealed.has(i)
-                ? <div style={{ fontSize: 13, color: "var(--green)", marginTop: 8 }}>✓ {q.answer}</div>
-                : <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 4 }}>Click to reveal</div>}
-            </div>
-          ))}
+      {quiz && quiz.length > 0 && (
+        <div className="card">
+          <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 14 }}>QUICK QUIZ</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {quiz.map((q, i) => (
+              <div key={i} onClick={() => toggle(i)} style={{
+                padding: 14, borderRadius: "var(--radius-md)", cursor: "pointer",
+                background: revealed.has(i) ? "var(--green-dim)" : "var(--bg-elevated)",
+                border: `1px solid ${revealed.has(i) ? "rgba(34,197,94,0.28)" : "var(--border)"}`,
+                transition: "all 0.2s",
+              }}>
+                <div style={{ fontWeight: 500, fontSize: 14 }}>Q{i + 1}. {q.question}</div>
+                {revealed.has(i)
+                  ? <div style={{ fontSize: 13, color: "var(--green)", marginTop: 8 }}>✓ {q.answer}</div>
+                  : <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 4 }}>Click to reveal</div>}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
