@@ -18,6 +18,7 @@ const FEATURE_CONFIG: Record<string, { label: string; color: string; dim: string
   analogy:      { label: "Analogy Generator", color: "var(--blue)",   dim: "var(--blue-dim)"   },
   reality:      { label: "Reality Mode",      color: "var(--green)",  dim: "var(--green-dim)"  },
   skill_income: { label: "Skill → Income",    color: "var(--amber)",  dim: "var(--amber-dim)"  },
+  ai_client:    { label: "AI Client Mode",   color: "var(--amber)",  dim: "rgba(245,158,11,0.12)" },
 };
 
 function formatDate(iso: string) {
@@ -25,17 +26,6 @@ function formatDate(iso: string) {
     month: "short", day: "numeric", year: "numeric",
     hour: "2-digit", minute: "2-digit",
   });
-}
-
-function getSummary(item: HistoryItem): string {
-  const i = item.input_data;
-  switch (item.feature_type) {
-    case "last_night":   return `${i.subject} — ${i.hours} hours`;
-    case "analogy":      return `${i.topic} (${i.subject})`;
-    case "reality":      return `${i.subject} — ${i.actual_hours}h of ${i.planned_hours}h planned`;
-    case "skill_income": return `${i.skill} (${i.level})`;
-    default:             return "Session";
-  }
 }
 
 // ── Last Night Detail ─────────────────────────────────────────
@@ -48,7 +38,12 @@ function LastNightDetail({ data }: { data: Record<string, unknown> }) {
   const tip        = data.survival_tip as string;
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
   const toggle = (i: number) =>
-    setRevealed(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n; });
+    setRevealed(prev => {
+      const n = new Set(prev);
+      if (n.has(i)) n.delete(i);
+      else n.add(i);
+      return n;
+    });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -56,7 +51,7 @@ function LastNightDetail({ data }: { data: Record<string, unknown> }) {
       {/* Survival tip */}
       <div style={{ background: "var(--purple-glow)", border: "1px solid rgba(124,92,252,0.22)", borderRadius: "var(--radius-lg)", padding: "18px 22px" }}>
         <p className="section-label" style={{ color: "var(--purple)", marginBottom: 8 }}>AURORA SAYS</p>
-        <p style={{ fontSize: 15, fontStyle: "italic", lineHeight: 1.6 }}>"{tip}"</p>
+        <p style={{ fontSize: 15, fontStyle: "italic", lineHeight: 1.6 }}>&quot;{tip}&quot;</p>
       </div>
 
       {/* High probability topics — new entries only */}
@@ -195,7 +190,7 @@ function AnalogyDetail({ data }: { data: Record<string, unknown> }) {
             </div>
             <div style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.18)", borderRadius: "var(--radius-md)", padding: 14 }}>
               <p className="section-label" style={{ color: "var(--blue)", marginBottom: 6 }}>REMEMBER THIS</p>
-              <p style={{ fontSize: 15, fontWeight: 600, fontStyle: "italic" }}>"{a.memorable_line}"</p>
+              <p style={{ fontSize: 15, fontWeight: 600, fontStyle: "italic" }}>&quot;{a.memorable_line}&quot;</p>
             </div>
           </div>
         </div>
@@ -259,7 +254,7 @@ function RealityDetail({ data }: { data: Record<string, unknown> }) {
 
       {/* Consequences */}
       <div className="card">
-        <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 12 }}>IF YOU DON'T CHANGE COURSE</p>
+        <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 12 }}>IF YOU DON&apos;T CHANGE COURSE</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {consequences?.map((c, i) => (
             <div key={i} style={{ display: "flex", gap: 10, padding: "12px 14px", borderRadius: "var(--radius-md)", background: "var(--red-dim)", border: "1px solid rgba(239,68,68,0.18)" }}>
@@ -300,8 +295,8 @@ function RealityDetail({ data }: { data: Record<string, unknown> }) {
 
       {/* Motivational truth */}
       <div style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.18)", borderRadius: "var(--radius-lg)", padding: "18px 22px" }}>
-        <p className="section-label" style={{ color: "var(--green)", marginBottom: 8 }}>AURORA'S TRUTH</p>
-        <p style={{ fontSize: 15, fontWeight: 500, fontStyle: "italic" }}>"{data.motivational_truth as string}"</p>
+        <p className="section-label" style={{ color: "var(--green)", marginBottom: 8 }}>AURORA&apos;S TRUTH</p>
+        <p style={{ fontSize: 15, fontWeight: 500, fontStyle: "italic" }}>&quot;{data.motivational_truth as string}&quot;</p>
       </div>
     </div>
   );
@@ -390,12 +385,153 @@ function SkillIncomeDetail({ data }: { data: Record<string, unknown> }) {
   );
 }
 
+// ── AI Client Detail ─────────────────────────────────────────────
+function AIClientDetail({
+  input,
+  data,
+}: {
+  input: Record<string, unknown>;
+  data: Record<string, unknown>;
+}) {
+  const verdict = (data.verdict as string) ?? "accepted";
+  const score   = data.client_score as number | undefined;
+
+  const verdictStyle = (() => {
+    if (verdict === "revision_needed") {
+      return { color: "var(--amber)", dim: "var(--amber-dim)", label: "Revision Needed" };
+    }
+    if (verdict === "rejected") {
+      return { color: "var(--red)", dim: "var(--red-dim)", label: "Rejected" };
+    }
+    return { color: "var(--green)", dim: "var(--green-dim)", label: "Accepted" };
+  })();
+
+  const strengths   = (data.strengths as string[] | undefined) ?? [];
+  const improvements = (data.improvements as string[] | undefined) ?? [];
+
+  const softSkill = data.soft_skill_feedback as
+    | Record<string, string>
+    | undefined;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Brief + personality */}
+      <div style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "var(--radius-xl)", padding: "18px 22px" }}>
+        <p className="section-label" style={{ color: "var(--amber)", marginBottom: 8 }}>AI CLIENT BRIEF</p>
+        <p style={{ fontSize: 13, color: "var(--text-2)", marginBottom: 10 }}>
+          Skill: <strong>{input.skill as string}</strong> · Personality: <strong>{input.personality_type as string}</strong>
+        </p>
+        <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.6 }}>
+          {input.brief as string}
+        </p>
+      </div>
+
+      {/* Verdict */}
+      <div style={{ background: verdictStyle.dim, border: `1px solid ${verdictStyle.color}44`, borderRadius: "var(--radius-xl)", padding: "22px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
+        <div>
+          <p className="section-label" style={{ color: verdictStyle.color, marginBottom: 6 }}>VERDICT</p>
+          <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 28, color: verdictStyle.color }}>
+            {verdictStyle.label}
+          </div>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 44, color: verdictStyle.color, lineHeight: 1 }}>
+            {score ?? "—"}
+          </div>
+          <div style={{ fontSize: 12, color: "var(--text-3)" }}>/ 100</div>
+        </div>
+      </div>
+
+      {/* Reaction */}
+      <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "16px 20px" }}>
+        <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 8 }}>CLIENT REACTION</p>
+        <p style={{ fontSize: 15, fontWeight: 500, fontStyle: "italic", lineHeight: 1.7, margin: 0 }}>
+          {(data.client_reaction as string) ?? ""}
+        </p>
+      </div>
+
+      {/* Strengths & Improvements */}
+      <div className="grid-2">
+        <div className="card">
+          <p className="section-label" style={{ color: "var(--green)", marginBottom: 12 }}>STRENGTHS</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {strengths.map((s, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, padding: "11px 14px", borderRadius: "var(--radius-md)", background: "var(--green-dim)", border: "1px solid rgba(34,197,94,0.2)" }}>
+                <span style={{ color: "var(--green)", flexShrink: 0 }}>✓</span>
+                <span style={{ fontSize: 13, color: "var(--text-2)" }}>{s}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="card">
+          <p className="section-label" style={{ color: "var(--red)", marginBottom: 12 }}>IMPROVEMENTS</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {improvements.map((imp, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, padding: "11px 14px", borderRadius: "var(--radius-md)", background: "var(--red-dim)", border: "1px solid rgba(239,68,68,0.18)" }}>
+                <span style={{ color: "var(--red)", flexShrink: 0 }}>→</span>
+                <span style={{ fontSize: 13, color: "var(--text-2)" }}>{imp}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Soft skill feedback */}
+      {softSkill && (
+        <div className="card">
+          <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 14 }}>SOFT SKILL FEEDBACK</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {Object.entries(softSkill).map(([key, val]) => (
+              <div key={key} style={{ display: "flex", gap: 16, alignItems: "baseline" }}>
+                <div style={{ width: 140, fontSize: 12, fontWeight: 600, color: "var(--text-2)", textTransform: "capitalize" }}>
+                  {key.replace(/_/g, " ")}
+                </div>
+                <div style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.55 }}>{val}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Coins */}
+      <div style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "var(--radius-lg)", padding: "18px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+        <div>
+          <p className="section-label" style={{ color: "var(--amber)", marginBottom: 6 }}>COINS EARNED</p>
+          <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 28, color: "var(--amber)" }}>
+            +{data.coins_earned as number ?? 0} coins
+          </div>
+          <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 4 }}>
+            {data.coins_reason as string}
+          </div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 6 }}>NEW BALANCE</p>
+          <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 22, color: "var(--text-1)" }}>
+            {data.new_balance as number ?? 0}
+          </div>
+        </div>
+      </div>
+
+      {/* Submission (optional visibility) */}
+      {typeof input.submission === "string" && input.submission.trim() && (
+        <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "16px 20px" }}>
+          <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 8 }}>YOUR SUBMISSION</p>
+          <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap" }}>
+            {input.submission as string}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main History Page ─────────────────────────────────────────
 export default function HistoryPage() {
   const [history,  setHistory]  = useState<HistoryItem[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState("");
   const [selected, setSelected] = useState<HistoryItem | null>(null);
+  const [filter,   setFilter]   = useState<string>("all");
 
   useEffect(() => {
     if (!isLoggedIn()) { window.location.href = "/login"; return; }
@@ -415,9 +551,13 @@ export default function HistoryPage() {
     const i = item.input_data;
     switch (item.feature_type) {
       case "last_night":   return `${i.subject} — ${i.hours} hours`;
-      case "analogy":      return `${i.topic} (${i.subject})`;
+      case "analogy": {
+        const mode = i.mode as string | undefined;
+        return mode ? `${i.topic} (${i.subject}) • ${mode}` : `${i.topic} (${i.subject})`;
+      }
       case "reality":      return `${i.subject} — ${i.actual_hours}h of ${i.planned_hours}h planned`;
       case "skill_income": return `${i.skill} (${i.level})`;
+      case "ai_client":   return `${i.skill} (${i.personality_type})`;
       default:             return "Session";
     }
   }
@@ -459,6 +599,7 @@ export default function HistoryPage() {
           {selected.feature_type === "analogy"      && <AnalogyDetail     data={selected.output_data} />}
           {selected.feature_type === "reality"      && <RealityDetail     data={selected.output_data} />}
           {selected.feature_type === "skill_income" && <SkillIncomeDetail data={selected.output_data} />}
+          {selected.feature_type === "ai_client"   && <AIClientDetail input={selected.input_data} data={selected.output_data} />}
         </main>
       </div>
     );
@@ -506,28 +647,51 @@ export default function HistoryPage() {
             }}>Go to Dashboard</Link>
           </div>
         )}
-
         {!loading && history.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
 
-            {/* Stats */}
-            <div className="grid-4" style={{ marginBottom: 8 }}>
+            {/* Stats — flex-wrap so all 5 fit */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
               {Object.entries(FEATURE_CONFIG).map(([key, cfg]) => {
                 const count = history.filter(h => h.feature_type === key).length;
                 return (
                   <div key={key} style={{
                     background: "var(--bg-card)", border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-md)", padding: "14px", textAlign: "center",
+                    borderRadius: "var(--radius-md)", padding: "12px 16px",
+                    textAlign: "center", minWidth: 100, flex: "1 1 100px",
                   }}>
-                    <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 24, color: cfg.color, marginBottom: 4 }}>{count}</div>
+                    <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 22, color: cfg.color, marginBottom: 2 }}>{count}</div>
                     <div style={{ fontSize: 11, color: "var(--text-3)" }}>{cfg.label}</div>
                   </div>
                 );
               })}
             </div>
 
-            {/* Items */}
-            {history.map((item) => {
+            {/* Filter tabs */}
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", borderBottom: "1px solid var(--border)", paddingBottom: 0, marginBottom: 8 }}>
+              {[("all" as const), ...Object.keys(FEATURE_CONFIG)].map((key) => {
+                const label = key === "all" ? "All" : FEATURE_CONFIG[key].label;
+                const color = key === "all" ? "var(--purple)" : FEATURE_CONFIG[key].color;
+                const active = filter === key;
+                return (
+                  <button key={key} onClick={() => setFilter(key)} style={{
+                    padding: "9px 15px", background: "none", border: "none",
+                    borderBottom: `2px solid ${active ? color : "transparent"}`,
+                    color: active ? "var(--text-1)" : "var(--text-2)",
+                    fontFamily: "var(--font-display)", fontWeight: active ? 600 : 400,
+                    fontSize: 13, cursor: "pointer", transition: "all 0.15s",
+                    marginBottom: -1, whiteSpace: "nowrap",
+                  }}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Items — filtered */}
+            {history
+              .filter((item) => filter === "all" || item.feature_type === filter)
+              .map((item) => {
               const cfg = FEATURE_CONFIG[item.feature_type];
               return (
                 <div key={item.id} onClick={() => setSelected(item)} style={{

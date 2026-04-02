@@ -40,16 +40,13 @@ html, body {
   --border-md:      rgba(255,255,255,0.10);
   --border-lg:      rgba(255,255,255,0.16);
 
-  --font-display:   'Syne', sans-serif;
-  --font-body:      'DM Sans', sans-serif;
+  --font-display:   var(--font-syne), 'Syne', sans-serif;
+  --font-body:      var(--font-dm-sans), 'DM Sans', sans-serif;
 
   --radius-sm:      8px;
   --radius-md:      12px;
   --radius-lg:      16px;
   --radius-xl:      24px;
-
-  --font-display: var(--font-syne), sans-serif;
-  --font-body: var(--font-dm-sans), sans-serif;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

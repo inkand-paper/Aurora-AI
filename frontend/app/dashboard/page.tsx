@@ -65,6 +65,21 @@ const FEATURES = [
       </svg>
     ),
   },
+  {
+    title: "AI Client Mode",
+    desc:  "Practice submission with a realistic client and earn Aurora Coins when your work matches the brief.",
+    href:  "/ai-client",
+    color: "var(--amber)",
+    dim:   "rgba(245,158,11,0.12)",
+    tag:   "REAL CLIENT",
+    icon: (
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+      </svg>
+    ),
+  },
 ];
 
 
@@ -77,92 +92,110 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="page-wrap">
-      <Header />
+    <>
+      <div className="page-wrap">
+        <Header />
 
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 24px 80px" }}>
+        <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 24px 80px" }}>
 
-        {/* ── Page heading ── */}
-        <div style={{ marginBottom: 40 }}>
-          <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 12 }}>
-            DASHBOARD
-          </p>
-          <h1 style={{ fontSize: "clamp(1.8rem, 3vw, 2.6rem)", fontWeight: 800, marginBottom: 10 }}>
-            What do you need today?
-          </h1>
-          <p style={{ color: "var(--text-2)", fontSize: 15 }}>
-            Choose a tool and AURORA gets to work immediately.
-          </p>
-        </div>
-
-        {/* ── Emergency banner ── */}
-        <Link href="/last-night" style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          background: "var(--purple)", borderRadius: "var(--radius-xl)",
-          padding: "28px 32px", textDecoration: "none",
-          marginBottom: 28, gap: 16, transition: "opacity 0.2s",
-        }}>
-          <div>
-            <p className="section-label" style={{ color: "rgba(255,255,255,0.6)", marginBottom: 8 }}>
-              EMERGENCY ACCESS
+          {/* ── Page heading ── */}
+          <div style={{ marginBottom: 40 }}>
+            <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 12 }}>
+              DASHBOARD
             </p>
-            <h2 style={{ fontWeight: 800, fontSize: "clamp(1.2rem, 2.5vw, 1.7rem)", color: "white", marginBottom: 4 }}>
-              Exam Tomorrow?
-            </h2>
-            <p style={{ fontSize: 14, color: "rgba(255,255,255,0.65)" }}>
-              Get your survival plan in under 10 seconds
+            <h1 style={{ fontSize: "clamp(1.8rem, 3vw, 2.6rem)", fontWeight: 800, marginBottom: 10 }}>
+              What do you need today?
+            </h1>
+            <p style={{ color: "var(--text-2)", fontSize: 15 }}>
+              Choose a tool and AURORA gets to work immediately.
             </p>
           </div>
-          <div style={{
-            width: 44, height: 44, borderRadius: "50%",
-            background: "rgba(255,255,255,0.14)",
-            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+
+          {/* ── Emergency banner ── */}
+          <Link href="/last-night?startTab=quiz" className="exam-tomorrow-btn" style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            background: "var(--purple)", borderRadius: "var(--radius-xl)",
+            padding: "28px 32px", textDecoration: "none",
+            marginBottom: 28, gap: 16,
           }}>
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none"
-              stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-            </svg>
-          </div>
-        </Link>
-
-        {/* ── Feature cards grid ── */}
-        <div className="grid-2" style={{ gap: 14 }}>
-          {FEATURES.map((f) => (
-            <Link key={f.title} href={f.href} style={{
-              display: "block",
-              background: "var(--bg-card)", border: "1px solid var(--border)",
-              borderRadius: "var(--radius-xl)", padding: "26px",
-              textDecoration: "none", transition: "border-color 0.2s, transform 0.2s",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-                <div style={{
-                  width: 42, height: 42, borderRadius: 11,
-                  background: f.dim, color: f.color,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  {f.icon}
-                </div>
-                <span className="tag-badge" style={{ background: f.dim, color: f.color }}>
-                  {f.tag}
-                </span>
-              </div>
-              <h3 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 18, marginBottom: 8, color: "var(--text-1)" }}>
-                {f.title}
-              </h3>
-              <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.6, marginBottom: 18 }}>
-                {f.desc}
+            <div>
+              <p className="section-label" style={{ color: "rgba(255,255,255,0.6)", marginBottom: 8 }}>
+                EMERGENCY ACCESS
               </p>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, color: f.color, fontFamily: "var(--font-display)" }}>
-                Open
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                </svg>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </main>
-    </div>
+              <h2 style={{ fontWeight: 800, fontSize: "clamp(1.2rem, 2.5vw, 1.7rem)", color: "white", marginBottom: 4 }}>
+                Exam Tomorrow?
+              </h2>
+              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.65)" }}>
+                Get your survival plan in under 10 seconds
+              </p>
+            </div>
+            <div style={{
+              width: 44, height: 44, borderRadius: "50%",
+              background: "rgba(255,255,255,0.14)",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+            }}>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none"
+                stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </div>
+          </Link>
+
+          {/* ── Feature cards grid ── */}
+          <div className="grid-2" style={{ gap: 14 }}>
+            {FEATURES.map((f) => (
+              <Link key={f.title} href={f.href} style={{
+                display: "block",
+                background: "var(--bg-card)", border: "1px solid var(--border)",
+                borderRadius: "var(--radius-xl)", padding: "26px",
+                textDecoration: "none", transition: "border-color 0.2s, transform 0.2s",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+                  <div style={{
+                    width: 42, height: 42, borderRadius: 11,
+                    background: f.dim, color: f.color,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {f.icon}
+                  </div>
+                  <span className="tag-badge" style={{ background: f.dim, color: f.color }}>
+                    {f.tag}
+                  </span>
+                </div>
+                <h3 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 18, marginBottom: 8, color: "var(--text-1)" }}>
+                  {f.title}
+                </h3>
+                <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.6, marginBottom: 18 }}>
+                  {f.desc}
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, color: f.color, fontFamily: "var(--font-display)" }}>
+                  Open
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                  </svg>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </main>
+      </div>
+
+      <style>{`
+        @keyframes bannerPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(124,92,252,0.4); }
+          50%       { box-shadow: 0 0 0 10px rgba(124,92,252,0); }
+        }
+        .exam-tomorrow-btn {
+          animation: bannerPulse 2.5s ease-in-out infinite;
+          transition: opacity 0.2s, transform 0.2s !important;
+        }
+        .exam-tomorrow-btn:hover {
+          opacity: 0.92;
+          transform: translateY(-2px);
+        }
+      `}</style>
+    </>
   );
 }
+

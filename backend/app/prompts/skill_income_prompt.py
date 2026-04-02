@@ -34,6 +34,44 @@ Respond in this EXACT JSON format:
       "outcome": "What you'll have at end of day"
     }}
   ],
+  "thirty_day_roadmap": [
+    {{
+      "range": "Days 8-14",
+      "focus": "Primary outcome for this stretch",
+      "milestones": [
+        "Milestone 1",
+        "Milestone 2",
+        "Milestone 3"
+      ]
+    }},
+    {{
+      "range": "Days 15-21",
+      "focus": "Primary outcome for this stretch",
+      "milestones": [
+        "Milestone 1",
+        "Milestone 2",
+        "Milestone 3"
+      ]
+    }},
+    {{
+      "range": "Days 22-28",
+      "focus": "Primary outcome for this stretch",
+      "milestones": [
+        "Milestone 1",
+        "Milestone 2",
+        "Milestone 3"
+      ]
+    }},
+    {{
+      "range": "Days 29-30",
+      "focus": "Primary outcome for this stretch",
+      "milestones": [
+        "Milestone 1",
+        "Milestone 2",
+        "Milestone 3"
+      ]
+    }}
+  ],
   "first_client_strategy": "Exactly how to get your first paying client or project",
   "biggest_mistake": "The #1 mistake students make when trying to monetize this skill"
 }}
@@ -41,6 +79,8 @@ Respond in this EXACT JSON format:
 Rules:
 - earning_paths: exactly 3 paths, ordered from easiest to hardest
 - seven_day_plan: all 7 days, realistic for {hours_per_week} hours/week
+- thirty_day_roadmap: exactly 4 ranges (Days 8-14, 15-21, 22-28, 29-30)
+- thirty_day_roadmap.milestones: exactly 3 milestones per range
 - Be specific with platforms: Fiverr, Upwork, Toptal, YouTube, Gumroad etc.
 - income numbers must be realistic for a student just starting out
 - first_client_strategy must be actionable in 24 hours

@@ -8,11 +8,13 @@ import { useEffect } from "react";
 // ── Types ───────────────────────────────────────────────────
 interface EarningPath { path: string; platform: string; how_it_works: string; realistic_earning: string; difficulty: string; best_for: string; }
 interface DayPlan     { day: number; task: string; time_needed: string; outcome: string; }
+interface RoadmapRange { range: string; focus: string; milestones: string[]; }
 interface APIResult {
   skill: string; level: string;
   income_potential: { minimum: string; maximum: string; timeline: string; };
   earning_paths:    EarningPath[];
   seven_day_plan:   DayPlan[];
+  thirty_day_roadmap?: RoadmapRange[];
   first_client_strategy: string;
   biggest_mistake:       string;
 }
@@ -68,11 +70,16 @@ export default function SkillIncomePage() {
   const [loading, setLoading] = useState(false);
   const [result,  setResult]  = useState<APIResult | null>(null);
   const [error,   setError]   = useState("");
+  const [roadmapUnlocked, setRoadmapUnlocked] = useState(false);
+  const [roadmapUnlockLoading, setRoadmapUnlockLoading] = useState(false);
+  const [roadmapUnlockError, setRoadmapUnlockError] = useState("");
 
   // ── API call ──────────────────────────────────────────────
   const generate = async () => {
   if (!skill.trim() || !hours) return;
   setLoading(true); setError(""); setResult(null);
+    setRoadmapUnlocked(false);
+    setRoadmapUnlockError("");
   try {
     const data = await apiPost<APIResult>("/api/skill-income/generate", {
       skill, level, hours_per_week: parseFloat(hours),
@@ -82,6 +89,23 @@ export default function SkillIncomePage() {
     setError(e instanceof Error ? e.message : "Failed to connect to AURORA");
   } finally { setLoading(false); }
 };
+
+  const unlockRoadmap = async () => {
+    if (!result) return;
+    setRoadmapUnlockLoading(true);
+    setRoadmapUnlockError("");
+    try {
+      await apiPost("/api/coins/spend", {
+        amount: 25,
+        reason: "Unlock Skill→Income 30-day roadmap",
+      });
+      setRoadmapUnlocked(true);
+    } catch (e: unknown) {
+      setRoadmapUnlockError(e instanceof Error ? e.message : "Unlock failed");
+    } finally {
+      setRoadmapUnlockLoading(false);
+    }
+  };
 
 useEffect(() => {
   if (!isLoggedIn()) {
@@ -251,6 +275,71 @@ useEffect(() => {
                 ))}
               </div>
             </div>
+
+            {/* 30-day roadmap */}
+            {result.thirty_day_roadmap && result.thirty_day_roadmap.length > 0 && (
+              <div className="card">
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(245,158,11,0.15)", color: "var(--amber)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 4h18"/><path d="M3 10h18"/><path d="M3 16h18"/><path d="M7 20h10"/>
+                    </svg>
+                  </div>
+                  <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16 }}>30-Day Roadmap</h2>
+                </div>
+
+                {roadmapUnlocked ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {result.thirty_day_roadmap.map((r, idx) => (
+                      <div key={idx} style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "14px 14px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
+                          <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, color: "var(--amber)", fontSize: 14 }}>
+                            {r.range}
+                          </div>
+                          <div style={{ fontSize: 13, color: "var(--text-2)" }}>{r.focus}</div>
+                        </div>
+                        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                          {r.milestones.map((m, mi) => (
+                            <div key={mi} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                              <span style={{ color: "var(--amber)", flexShrink: 0, marginTop: 2 }}>✓</span>
+                              <span style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.55 }}>{m}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "16px 16px" }}>
+                    <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, color: "var(--text-3)" }}>
+                      Locked
+                    </div>
+                    <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 6, lineHeight: 1.5 }}>
+                      Unlock the full 30-day roadmap for <strong style={{ color: "var(--amber)" }}>25 coins</strong>.
+                    </div>
+                    <button
+                      onClick={unlockRoadmap}
+                      disabled={roadmapUnlockLoading}
+                      style={{
+                        marginTop: 14,
+                        padding: "10px 16px",
+                        borderRadius: 10,
+                        background: "var(--amber)",
+                        color: "white",
+                        border: "none",
+                        cursor: roadmapUnlockLoading ? "not-allowed" : "pointer",
+                        fontFamily: "var(--font-display)",
+                        fontWeight: 700,
+                        fontSize: 13,
+                      }}
+                    >
+                      {roadmapUnlockLoading ? "Unlocking..." : "Unlock Roadmap"}
+                    </button>
+                    {roadmapUnlockError && <div style={{ marginTop: 10, fontSize: 12, color: "var(--red)" }}>{roadmapUnlockError}</div>}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* First client + Biggest mistake */}
             <div className="grid-2">

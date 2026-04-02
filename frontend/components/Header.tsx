@@ -3,21 +3,24 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getUser, logout, AuthUser } from "../lib/auth";
+import { apiGet } from "../lib/api";
 
 const navLinks = [
-  { href: "/last-night",   label: "Last Night Mode" },
-  { href: "/analogy",      label: "Analogy Generator" },
-  { href: "/reality",      label: "Reality Mode" },
+  { href: "/last-night",   label: "Last Night" },
+  { href: "/analogy",      label: "Analogy" },
+  { href: "/reality",      label: "Reality" },
   { href: "/skill-income", label: "Skill → Income" },
+  { href: "/ai-client",    label: "AI Client" },
   { href: "/history",      label: "History" },
 ];
 
 export default function Header() {
   const pathname  = usePathname();
   const router    = useRouter();
-  const [user,     setUser]     = useState<AuthUser | null>(null);
+  const [user,     setUser]     = useState<AuthUser | null>(() => getUser());
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [coins,    setCoins]    = useState<number | null>(null);
 
   // Track window width with JS — 100% reliable
   useEffect(() => {
@@ -27,10 +30,18 @@ export default function Header() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Close menu + refresh user on route change
+  // Fetch coin balance whenever user changes
   useEffect(() => {
-    setUser(getUser());
-    setMenuOpen(false);
+    if (!user) { setCoins(null); return; }
+    apiGet<{ balance: number }>("/api/coins/balance")
+      .then((d) => setCoins(d.balance))
+      .catch(() => setCoins(null));
+  }, [user]);
+
+  // Close menu on route change (avoid setState synchronously in effect)
+  useEffect(() => {
+    const id = window.setTimeout(() => setMenuOpen(false), 0);
+    return () => window.clearTimeout(id);
   }, [pathname]);
 
   // Close menu on outside click
@@ -47,6 +58,7 @@ export default function Header() {
   const handleLogout = () => {
     logout();
     setUser(null);
+    setCoins(null);
     setMenuOpen(false);
     router.push("/");
   };
@@ -125,6 +137,19 @@ export default function Header() {
                 }}>
                   Hi, {user.name.split(" ")[0]}
                 </Link>
+                {coins !== null && (
+                  <span style={{
+                    fontSize: 12, fontWeight: 700,
+                    color: "var(--amber)",
+                    background: "rgba(245,158,11,0.12)",
+                    border: "1px solid rgba(245,158,11,0.25)",
+                    borderRadius: 7, padding: "4px 9px",
+                    fontFamily: "var(--font-display)",
+                    whiteSpace: "nowrap",
+                  }}>
+                    ⚡ {coins}
+                  </span>
+                )}
                 <button onClick={handleLogout} style={{
                   padding: "7px 14px", borderRadius: 8,
                   background: "var(--bg-elevated)", color: "var(--text-2)",

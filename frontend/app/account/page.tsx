@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import Header from "../../components/Header";
-import { getUser, saveAuth, AuthUser } from "../../lib/auth";
-import { apiPost } from "../../lib/api";
+import { getUser, saveAuth, getToken, AuthUser } from "../../lib/auth";
+import { apiPost, apiGet } from "../../lib/api";
 import { useRouter } from "next/navigation";
 
 export default function AccountPage() {
@@ -12,21 +12,25 @@ export default function AccountPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error,   setError]   = useState("");
+  const [coins,   setCoins]   = useState<number | null>(null);
 
   useEffect(() => {
     const u = getUser();
     if (!u) { router.push("/login"); return; }
     setUser(u);
     setName(u.name);
-  }, []);
+    // Load coin balance
+    apiGet<{ balance: number }>("/api/coins/balance")
+      .then((d) => setCoins(d.balance))
+      .catch(() => setCoins(0));
+  }, [router]);
 
   const updateProfile = async () => {
     if (!name.trim()) return;
     setLoading(true); setError(""); setSuccess("");
     try {
       const data = await apiPost<AuthUser>("/api/auth/update-profile", { name });
-      // Update local storage
-      const token = localStorage.getItem("aurora_token") || "";
+      const token = getToken() || "";
       saveAuth(token, data);
       setUser(data);
       setSuccess("Profile updated successfully!");
@@ -131,6 +135,7 @@ export default function AccountPage() {
               { label: "User ID",  value: `#${user.id}` },
               { label: "Email",    value: user.email },
               { label: "Plan",     value: "Free" },
+              { label: "Aurora Coins", value: coins !== null ? `${coins} coins` : "…" },
             ].map((item) => (
               <div key={item.label} style={{
                 display: "flex", justifyContent: "space-between",

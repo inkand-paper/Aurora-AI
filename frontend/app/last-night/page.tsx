@@ -46,9 +46,22 @@ export default function LastNightPage() {
   const [error,      setError]      = useState("");
   const [revealed,   setRevealed]   = useState<Set<number>>(new Set());
   const [activeTab,  setActiveTab]  = useState<"plan"|"quiz"|"skip">("plan");
+  const [requestedStartTab, setRequestedStartTab] = useState<"plan"|"quiz"|"skip" | null>(null);
+  const [premiumUnlocked, setPremiumUnlocked] = useState(false);
+  const [premiumUnlockLoading, setPremiumUnlockLoading] = useState(false);
+  const [premiumUnlockError, setPremiumUnlockError] = useState("");
 
   useEffect(() => {
     if (!isLoggedIn()) window.location.href = "/login";
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const startTab = params.get("startTab");
+    if (startTab === "quiz" || startTab === "skip" || startTab === "plan") {
+      setRequestedStartTab(startTab);
+      setActiveTab(startTab);
+    }
   }, []);
 
   const selectMode = (val: number) => {
@@ -60,7 +73,10 @@ export default function LastNightPage() {
   const generate = async () => {
     if (!subject.trim() || !hours) return;
     setLoading(true); setError(""); setResult(null);
-    setRevealed(new Set()); setActiveTab("plan");
+    setRevealed(new Set());
+    setActiveTab(requestedStartTab ?? "plan");
+    setPremiumUnlocked(false);
+    setPremiumUnlockError("");
     try {
       const data = await apiPost<APIResult>("/api/last-night/generate", {
         subject, hours: parseFloat(hours),
@@ -71,8 +87,29 @@ export default function LastNightPage() {
     } finally { setLoading(false); }
   };
 
+  const unlockPremiumTopics = async () => {
+    setPremiumUnlockLoading(true);
+    setPremiumUnlockError("");
+    try {
+      await apiPost("/api/coins/spend", {
+        amount: 20,
+        reason: "Unlock Last Night premium topics & smart skip",
+      });
+      setPremiumUnlocked(true);
+    } catch (e: unknown) {
+      setPremiumUnlockError(e instanceof Error ? e.message : "Unlock failed");
+    } finally {
+      setPremiumUnlockLoading(false);
+    }
+  };
+
   const toggle = (i: number) =>
-    setRevealed(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n; });
+    setRevealed(prev => {
+      const n = new Set(prev);
+      if (n.has(i)) n.delete(i);
+      else n.add(i);
+      return n;
+    });
 
   const modeColor = result
     ? result.hours_available <= 2 ? "var(--red)"
@@ -92,7 +129,7 @@ export default function LastNightPage() {
           </span>
           <h1 style={{ fontSize: "clamp(1.8rem, 3vw, 2.8rem)", fontWeight: 800, marginBottom: 12 }}>
             Exam tomorrow?<br />
-            <span style={{ color: "var(--purple)" }}>We've got you.</span>
+            <span style={{ color: "var(--purple)" }}>We&apos;ve got you.</span>
           </h1>
           <p style={{ color: "var(--text-2)", fontSize: 15, maxWidth: 460 }}>
             Tell AURORA how much time you have. Get a laser-focused survival plan instantly.
@@ -174,47 +211,71 @@ export default function LastNightPage() {
                 </p>
               </div>
               <div style={{ fontSize: 13, color: "var(--text-2)", fontStyle: "italic", maxWidth: 320 }}>
-                "{result.survival_tip}"
+                &quot;{result.survival_tip}&quot;
               </div>
             </div>
 
             {/* High probability topics */}
-            <div className="card">
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(245,158,11,0.2)", color: "var(--amber)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <IconStar />
-                </div>
-                <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16 }}>
-                  High Probability Exam Topics
-                </h2>
-                <span style={{ fontSize: 11, color: "var(--text-3)" }}>likely to appear</span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {result.high_probability_topics.map((t, i) => (
-                  <div key={i} className="row-item">
-                    <div style={{
-                      width: 28, height: 28, borderRadius: 7, flexShrink: 0,
-                      background: t.confidence === "high" ? "rgba(245,158,11,0.2)" : "rgba(245,158,11,0.1)",
-                      color: "var(--amber)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                      <IconStar />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{t.topic}</div>
-                      <div style={{ fontSize: 12, color: "var(--text-3)" }}>{t.reason}</div>
-                    </div>
-                    <span style={{
-                      fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 5,
-                      background: t.confidence === "high" ? "rgba(245,158,11,0.2)" : "rgba(245,158,11,0.1)",
-                      color: "var(--amber)", fontFamily: "var(--font-display)", flexShrink: 0,
-                    }}>
-                      {t.confidence.toUpperCase()}
-                    </span>
+            {premiumUnlocked ? (
+              <div className="card">
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(245,158,11,0.2)", color: "var(--amber)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <IconStar />
                   </div>
-                ))}
+                  <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16 }}>
+                    High Probability Exam Topics
+                  </h2>
+                  <span style={{ fontSize: 11, color: "var(--text-3)" }}>likely to appear</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {result.high_probability_topics.map((t, i) => (
+                    <div key={i} className="row-item">
+                      <div style={{
+                        width: 28, height: 28, borderRadius: 7, flexShrink: 0,
+                        background: t.confidence === "high" ? "rgba(245,158,11,0.2)" : "rgba(245,158,11,0.1)",
+                        color: "var(--amber)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <IconStar />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{t.topic}</div>
+                        <div style={{ fontSize: 12, color: "var(--text-3)" }}>{t.reason}</div>
+                      </div>
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 5,
+                        background: t.confidence === "high" ? "rgba(245,158,11,0.2)" : "rgba(245,158,11,0.1)",
+                        color: "var(--amber)", fontFamily: "var(--font-display)", flexShrink: 0,
+                      }}>
+                        {t.confidence.toUpperCase()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="card">
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(245,158,11,0.2)", color: "var(--amber)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <IconStar />
+                  </div>
+                  <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16 }}>High Probability Topics</h2>
+                  <span style={{ fontSize: 11, color: "var(--text-3)" }}>premium</span>
+                </div>
+                <div style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.6 }}>
+                  Unlock the most likely exam topics + skip strategy for <strong style={{ color: "var(--amber)" }}>20 coins</strong>.
+                </div>
+                <button
+                  className="btn"
+                  onClick={unlockPremiumTopics}
+                  disabled={premiumUnlockLoading}
+                  style={{ background: "var(--purple)", marginTop: 14 }}
+                >
+                  {premiumUnlockLoading ? "Unlocking..." : "Unlock Premium"}
+                </button>
+                {premiumUnlockError && <div style={{ marginTop: 10, fontSize: 12, color: "var(--red)" }}>{premiumUnlockError}</div>}
+              </div>
+            )}
 
             {/* Tabs */}
             <div style={{ display: "flex", gap: 6, borderBottom: "1px solid var(--border)", paddingBottom: 0 }}>
@@ -357,32 +418,55 @@ export default function LastNightPage() {
 
             {/* Tab: Smart Skip */}
             {activeTab === "skip" && (
-              <div className="card">
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                  <div style={{ width: 26, height: 26, borderRadius: 7, background: "var(--red-dim)", color: "var(--red)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <IconSkip />
-                  </div>
-                  <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16 }}>Skip These Tonight</h2>
-                </div>
-                <p style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 14 }}>
-                  Don't waste time on these — they're low yield for the time you have.
-                </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {result.skip_these.map((t, i) => (
-                    <div key={i} style={{
-                      display: "flex", gap: 12, padding: "13px 15px",
-                      borderRadius: "var(--radius-md)",
-                      background: "var(--red-dim)", border: "1px solid rgba(239,68,68,0.18)",
-                    }}>
-                      <span style={{ color: "var(--red)", flexShrink: 0, marginTop: 1 }}><IconSkip /></span>
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{t.topic}</div>
-                        <div style={{ fontSize: 12, color: "var(--text-3)" }}>{t.reason}</div>
-                      </div>
+              premiumUnlocked ? (
+                <div className="card">
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 7, background: "var(--red-dim)", color: "var(--red)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <IconSkip />
                     </div>
-                  ))}
+                    <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16 }}>Skip These Tonight</h2>
+                  </div>
+                  <p style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 14 }}>
+                    Don&apos;t waste time on these — they&apos;re low yield for the time you have.
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {result.skip_these.map((t, i) => (
+                      <div key={i} style={{
+                        display: "flex", gap: 12, padding: "13px 15px",
+                        borderRadius: "var(--radius-md)",
+                        background: "var(--red-dim)", border: "1px solid rgba(239,68,68,0.18)",
+                      }}>
+                        <span style={{ color: "var(--red)", flexShrink: 0, marginTop: 1 }}><IconSkip /></span>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{t.topic}</div>
+                          <div style={{ fontSize: 12, color: "var(--text-3)" }}>{t.reason}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="card">
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 7, background: "var(--red-dim)", color: "var(--red)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <IconSkip />
+                    </div>
+                    <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16 }}>Smart Skip (Locked)</h2>
+                  </div>
+                  <p style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 14 }}>
+                    Unlock smart skipping strategy for <strong style={{ color: "var(--amber)" }}>20 coins</strong>.
+                  </p>
+                  <button
+                    className="btn"
+                    onClick={unlockPremiumTopics}
+                    disabled={premiumUnlockLoading}
+                    style={{ background: "var(--purple)" }}
+                  >
+                    {premiumUnlockLoading ? "Unlocking..." : "Unlock Premium"}
+                  </button>
+                  {premiumUnlockError && <div style={{ marginTop: 10, fontSize: 12, color: "var(--red)" }}>{premiumUnlockError}</div>}
+                </div>
+              )
             )}
           </div>
         )}

@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+
+# Local databases (SQLite)
+*.db
+*.sqlite3
+*.sqlite
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environments / Secrets
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+*.env

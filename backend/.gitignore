@@ -1,0 +1,9 @@
+# Secret environments
+.env
+*.env
+.env.local
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.db

@@ -70,12 +70,27 @@ const FEATURES = [
       </svg>
     ),
   },
+  {
+    title: "AI Client Mode",
+    desc:  "Get a realistic freelance client brief, submit your work, and earn Aurora Coins for feedback quality.",
+    href:  "/ai-client",
+    color: "var(--amber)",
+    dim:   "rgba(245,158,11,0.12)",
+    tag:   "REAL CLIENT",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+      </svg>
+    ),
+  },
 ];
 
 const STATS = [
-  { value: "4",    label: "AI Features" },
+  { value: "5",    label: "AI Features" },
   { value: "10s",  label: "To get a plan" },
-  { value: "Free", label: "Groq-powered" },
+  { value: "Free", label: "AI-powered" },
   { value: "24/7", label: "Always available" },
 ];
 

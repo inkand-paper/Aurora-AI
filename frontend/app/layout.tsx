@@ -30,7 +30,7 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
       </head>
-      <body style={{ margin: 0, padding: 0, width: "100%", overflowX: "hidden" }}>
+      <body className={`${syne.variable} ${dmSans.variable}`} style={{ margin: 0, padding: 0, width: "100%", overflowX: "hidden" }}>
         {children}
       </body>
     </html>

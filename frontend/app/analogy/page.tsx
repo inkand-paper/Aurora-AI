@@ -1,10 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../../components/Header";
 import { apiPost } from "../../lib/api";
 import { isLoggedIn } from "../../lib/auth";
-import { useEffect } from "react";
-
 
 // ── Types ───────────────────────────────────────────────────
 interface Analogy { title: string; scenario: string; explanation: string; memorable_line: string; }
@@ -45,29 +43,42 @@ const IconAlert = () => (
 
 // ─────────────────────────────────────────────────────────────
 export default function AnalogyPage() {
-  const [topic,   setTopic]   = useState("");
-  const [subject, setSubject] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result,  setResult]  = useState<APIResult | null>(null);
-  const [error,   setError]   = useState("");
+  const [topic,     setTopic]     = useState("");
+  const [subject,   setSubject]   = useState("");
+  const [mode,      setMode]      = useState<"funny" | "story" | "teacher" | "savage">("teacher");
+  const [loading,   setLoading]   = useState(false);
+  const [result,    setResult]    = useState<APIResult | null>(null);
+  const [error,     setError]     = useState("");
+  const [coinError, setCoinError] = useState("");
+
+  // ── Auth guard (runs first) ───────────────────────────────
+  useEffect(() => {
+    if (!isLoggedIn()) window.location.href = "/login";
+  }, []);
 
   // ── API call ──────────────────────────────────────────────
   const generate = async () => {
-  if (!topic.trim() || !subject.trim()) return;
-  setLoading(true); setError(""); setResult(null);
-  try {
-    const data = await apiPost<APIResult>("/api/analogy/generate", { topic, subject });
-    setResult(data);
-  } catch (e: unknown) {
-    setError(e instanceof Error ? e.message : "Failed to connect to AURORA");
-  } finally { setLoading(false); }
-};
-
-useEffect(() => {
-  if (!isLoggedIn()) {
-    window.location.href = "/login";
-  }
-}, []);
+    if (!topic.trim() || !subject.trim()) return;
+    setCoinError("");
+    setLoading(true); setError(""); setResult(null);
+    try {
+      const data = await apiPost<APIResult>("/api/analogy/generate", { topic, subject, mode });
+      setResult(data);
+      // Deduct coins for premium modes AFTER successful generation
+      if (mode !== "teacher") {
+        try {
+          await apiPost("/api/coins/spend", {
+            amount: 15,
+            reason: `Premium analogy mode: ${mode}`,
+          });
+        } catch {
+          setCoinError("⚠️ Could not deduct coins — you may not have enough balance.");
+        }
+      }
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to connect to AURORA");
+    } finally { setLoading(false); }
+  };
 
   // ── Render ────────────────────────────────────────────────
   return (
@@ -82,11 +93,11 @@ useEffect(() => {
             <IconBrain/> Analogy Generator
           </span>
           <h1 style={{ fontSize: "clamp(1.8rem, 3vw, 2.8rem)", fontWeight: 800, marginBottom: 12 }}>
-            Can't understand it?<br />
-            <span style={{ color: "var(--blue)" }}>Let's make it click.</span>
+            Can&apos;t understand it?<br />
+            <span style={{ color: "var(--blue)" }}>Let&apos;s make it click.</span>
           </h1>
           <p style={{ color: "var(--text-2)", fontSize: 15, maxWidth: 460 }}>
-            AURORA converts complex concepts into real-life analogies you'll never forget.
+            AURORA converts complex concepts into real-life analogies you&apos;ll never forget.
           </p>
         </div>
 
@@ -94,7 +105,7 @@ useEffect(() => {
         <div className="card" style={{ marginBottom: 20 }}>
           <div className="grid-2" style={{ marginBottom: 20 }}>
             <div>
-              <label className="field-label">Concept you don't understand</label>
+              <label className="field-label">Concept you don&apos;t understand</label>
               <input className="text-input" placeholder="e.g. Entropy"
                 value={topic} onChange={(e) => setTopic(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && generate()} />
@@ -106,6 +117,25 @@ useEffect(() => {
                 onKeyDown={(e) => e.key === "Enter" && generate()} />
             </div>
           </div>
+          <div style={{ marginBottom: 18 }}>
+            <label className="field-label">Analogy Mode</label>
+            {mode !== "teacher" && (
+              <p style={{ fontSize: 12, color: "var(--amber)", marginBottom: 8 }}>
+                ⚡ Premium mode — costs 15 coins after generation
+              </p>
+            )}
+            <select
+              className="text-input"
+              value={mode}
+              onChange={(e) => setMode(e.target.value as typeof mode)}
+              style={{ cursor: "pointer" }}
+            >
+              <option value="teacher">Teacher-style (Free)</option>
+              <option value="funny">Funny 😂 (15 coins)</option>
+              <option value="story">Story-based 📖 (15 coins)</option>
+              <option value="savage">Savage 💀 (15 coins)</option>
+            </select>
+          </div>
           <button className="btn" onClick={generate}
             disabled={loading || !topic.trim() || !subject.trim()}
             style={{ background: "var(--blue)" }}>
@@ -115,8 +145,9 @@ useEffect(() => {
           </button>
         </div>
 
-        {/* Error */}
-        {error && <div className="error-box">{error}</div>}
+        {/* Errors */}
+        {error     && <div className="error-box">{error}</div>}
+        {coinError && <div style={{ background: "var(--amber-dim)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "var(--radius-md)", padding: "12px 16px", color: "var(--amber)", fontSize: 13, marginBottom: 16 }}>{coinError}</div>}
 
         {/* ── Results ── */}
         {result && (
@@ -174,7 +205,7 @@ useEffect(() => {
                       <span className="section-label" style={{ color: "var(--blue)" }}>REMEMBER THIS</span>
                     </div>
                     <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text-1)", lineHeight: 1.5, fontStyle: "italic" }}>
-                      "{a.memorable_line}"
+                      &quot;{a.memorable_line}&quot;
                     </p>
                   </div>
                 </div>

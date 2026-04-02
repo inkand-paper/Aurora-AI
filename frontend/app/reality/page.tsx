@@ -13,6 +13,9 @@ interface APIResult {
   prediction_reason: string; reality_check: string;
   consequences: string[]; recovery_plan: RecoveryAction[];
   motivational_truth: string;
+  consistency_score: number;
+  academic_reality_score: number;
+  risk_indicator: "low" | "medium" | "high";
 }
 
 // ── Inline SVG icons ─────────────────────────────────────────
@@ -43,6 +46,12 @@ const impactColor = (i: string) => {
   return "var(--text-3)";
 };
 
+const riskColor = (r: string) => {
+  if (r === "low") return "var(--green)";
+  if (r === "medium") return "var(--amber)";
+  return "var(--red)";
+};
+
 // ─────────────────────────────────────────────────────────────
 export default function RealityPage() {
   const [subject, setSubject] = useState("");
@@ -52,11 +61,16 @@ export default function RealityPage() {
   const [loading, setLoading] = useState(false);
   const [result,  setResult]  = useState<APIResult | null>(null);
   const [error,   setError]   = useState("");
+  const [unlockedInsights, setUnlockedInsights] = useState(false);
+  const [unlockLoading, setUnlockLoading] = useState(false);
+  const [unlockError, setUnlockError] = useState("");
 
   // ── API call ──────────────────────────────────────────────
   const check = async () => {
   if (!subject || !planned || !actual || !days) return;
   setLoading(true); setError(""); setResult(null);
+    setUnlockedInsights(false);
+    setUnlockError("");
   try {
     const data = await apiPost<APIResult>("/api/reality/check", {
       subject,
@@ -69,6 +83,23 @@ export default function RealityPage() {
     setError(e instanceof Error ? e.message : "Failed to connect to AURORA");
   } finally { setLoading(false); }
 };
+
+  const unlockInsights = async () => {
+    if (!result) return;
+    setUnlockLoading(true);
+    setUnlockError("");
+    try {
+      await apiPost("/api/coins/spend", {
+        amount: 20,
+        reason: "Unlock Reality advanced insights",
+      });
+      setUnlockedInsights(true);
+    } catch (e: unknown) {
+      setUnlockError(e instanceof Error ? e.message : "Unlock failed");
+    } finally {
+      setUnlockLoading(false);
+    }
+  };
 
   const inputFields = [
     { label: "Subject",               val: subject, set: setSubject, placeholder: "e.g. Mathematics",  type: "text"   },
@@ -131,8 +162,8 @@ export default function RealityPage() {
         {result && (
           <div className="results-appear" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-            {/* Grade + Completion rate */}
-            <div className="grid-2">
+            {/* Grade + Completion rate + Academic reality */}
+            <div className="grid-3">
               {[
                 { label: "PREDICTED GRADE",  value: result.performance_prediction,       color: gradeColor(result.performance_prediction) },
                 { label: "COMPLETION RATE",   value: `${Math.round(result.completion_rate)}%`, color: gradeColor(result.performance_prediction) },
@@ -147,6 +178,55 @@ export default function RealityPage() {
                   </div>
                 </div>
               ))}
+              {/* Academic reality score (premium enhancement) */}
+              <div style={{
+                background: "rgba(245,158,11,0.06)",
+                border: "1px solid rgba(245,158,11,0.22)",
+                borderRadius: "var(--radius-xl)",
+                padding: "28px 24px",
+                textAlign: "center",
+              }}>
+                <p className="section-label" style={{ color: "var(--text-3)", marginBottom: 14 }}>ACADEMIC REALITY SCORE</p>
+                {unlockedInsights ? (
+                  <>
+                    <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "clamp(3rem, 9vw, 5rem)", color: riskColor(result.risk_indicator), lineHeight: 1 }}>
+                      {result.academic_reality_score}
+                    </div>
+                    <div style={{ fontSize: 13, color: "var(--text-3)", marginTop: 6, lineHeight: 1.5 }}>
+                      Consistency: <strong style={{ color: "var(--text-1)" }}>{result.consistency_score}</strong> · Risk:{" "}
+                      <strong style={{ color: riskColor(result.risk_indicator) }}>{result.risk_indicator.toUpperCase()}</strong>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "clamp(2rem, 5vw, 3.2rem)", color: "var(--text-3)", lineHeight: 1.1 }}>
+                      Locked
+                    </div>
+                    <div style={{ fontSize: 13, color: "var(--text-3)", marginTop: 8, lineHeight: 1.5 }}>
+                      Unlock for <strong style={{ color: "var(--amber)" }}>20 coins</strong>
+                    </div>
+                    <button
+                      onClick={unlockInsights}
+                      disabled={unlockLoading}
+                      style={{
+                        marginTop: 14,
+                        padding: "10px 16px",
+                        borderRadius: 10,
+                        background: "var(--purple)",
+                        color: "white",
+                        border: "none",
+                        cursor: unlockLoading ? "not-allowed" : "pointer",
+                        fontFamily: "var(--font-display)",
+                        fontWeight: 700,
+                        fontSize: 13,
+                      }}
+                    >
+                      {unlockLoading ? "Unlocking..." : "Unlock Insights"}
+                    </button>
+                    {unlockError && <div style={{ marginTop: 10, fontSize: 12, color: "var(--red)" }}>{unlockError}</div>}
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Reality check */}
@@ -170,7 +250,7 @@ export default function RealityPage() {
                 <div style={{ width: 26, height: 26, borderRadius: 7, background: "var(--red-dim)", color: "var(--red)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <IconZap/>
                 </div>
-                <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16 }}>If you don't change course</h2>
+                <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16 }}>If you don&apos;t change course</h2>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {result.consequences.map((c, i) => (
@@ -226,10 +306,10 @@ export default function RealityPage() {
               borderRadius: "var(--radius-xl)", padding: "22px 26px",
             }}>
               <span className="section-label" style={{ color: "var(--green)", display: "block", marginBottom: 10 }}>
-                AURORA'S TRUTH
+                AURORA&apos;S TRUTH
               </span>
               <p style={{ fontSize: 16, fontWeight: 500, lineHeight: 1.6, fontStyle: "italic" }}>
-                "{result.motivational_truth}"
+                &quot;{result.motivational_truth}&quot;
               </p>
             </div>
 
